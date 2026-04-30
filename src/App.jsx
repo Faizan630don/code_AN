@@ -4,8 +4,8 @@ export default function ShilpiWebsite() {
   const [clicked, setClicked] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const audioRef = useRef(null);
   const [showMessage, setShowMessage] = useState(0);
-  const playerRef = useRef(null);
   
   const hearts = Array.from({ length: 25 });
   const reasons = [
@@ -17,67 +17,29 @@ export default function ShilpiWebsite() {
   ];
 
   useEffect(() => {
-    // Load YouTube IFrame API
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = () => {
-      playerRef.current = new window.YT.Player('youtube-player', {
-        height: '200',
-        width: '200',
-        videoId: '-BjPlNkrsII',
-        playerVars: {
-          'autoplay': 1,
-          'mute': 1,
-          'controls': 0,
-          'loop': 1,
-          'playlist': '-BjPlNkrsII',
-          'origin': window.location.origin,
-          'enablejsapi': 1
-        },
-        events: {
-          'onReady': (event) => {
-            console.log("Player Ready - Official Video");
-            setIsPlayerReady(true);
-          },
-          'onStateChange': (event) => {
-            console.log("Player State Change:", event.data);
-          },
-          'onError': (event) => {
-            console.error("YouTube Player Error:", event.data);
-          }
-        }
-      });
-    };
+    if (audioRef.current) {
+      audioRef.current.volume = 0.5; // Set to a pleasant volume
+    }
   }, []);
 
   const startMusic = () => {
-    console.log("Starting Music...");
-    if (playerRef.current && playerRef.current.playVideo) {
-      try {
-        playerRef.current.setVolume(100);
-        playerRef.current.unMute();
-        playerRef.current.playVideo();
+    if (audioRef.current) {
+      audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
-        console.log("Music Started Successfully");
-      } catch (err) {
-        console.error("Error starting music:", err);
-      }
-    } else {
-      console.warn("Player not ready yet");
+      }).catch(err => {
+        console.error("Audio playback failed:", err);
+      });
     }
     setHasInteracted(true);
   };
 
   const toggleMusic = (e) => {
     e.stopPropagation();
-    if (playerRef.current) {
+    if (audioRef.current) {
       if (isMusicPlaying) {
-        playerRef.current.pauseVideo();
+        audioRef.current.pause();
       } else {
-        playerRef.current.playVideo();
+        audioRef.current.play();
       }
       setIsMusicPlaying(!isMusicPlaying);
     }
@@ -88,8 +50,13 @@ export default function ShilpiWebsite() {
       className="min-h-screen bg-gradient-to-br from-rose-100 via-pink-200 to-red-100 flex items-center justify-center p-6 overflow-hidden relative font-['Outfit',_sans-serif]"
       onClick={() => { if (!hasInteracted) startMusic(); }}
     >
-      {/* Hidden YouTube Player Element */}
-      <div id="youtube-player" className="fixed -top-[1000px] -left-[1000px] w-[200px] h-[200px] pointer-events-none opacity-0"></div>
+      {/* Native HTML5 Audio Player */}
+      <audio 
+        ref={audioRef} 
+        src="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e0/db/47/e0db47b0-7f70-0631-0414-cd4777d2fb3e/mzaf_6362891154838442638.plus.aac.p.m4a" 
+        loop 
+        preload="auto"
+      />
 
       {/* Floating Music Control */}
       <button
